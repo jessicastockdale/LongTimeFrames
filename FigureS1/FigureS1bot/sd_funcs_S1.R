@@ -317,8 +317,6 @@ getAllCasesbyDay2 = function(df,
 
 ##########################################################################
 # Plotting function: take in 4 solutions in list form, and make the ggplots
-#
-# (I should code up a better version where it doesn't have to be 4 cases)
 makePlots = function(tt2,
                      type="symp",
                      onlyafter = 5,
