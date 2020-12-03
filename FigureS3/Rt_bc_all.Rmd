@@ -1,0 +1,157 @@
+---
+title: "Effective Reproduction Number for BC, using real and simulated data"
+author: "Nicola Mulberry, Caroline Colijn, Jessica Stockdale"
+date: "12/06/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+theme_set(ggsidekick::theme_sleek())
+library(tidyr)
+library(lubridate)
+library(reshape2)
+library(dplyr)
+library(EpiEstim)
+library(gridExtra)
+
+```
+# Data
+
+Get case count data for BC - real data and simulated relaxation data, at 3 different strengths
+
+```{r}
+bcdata = read.csv("../bc_casecounts2204.csv", header=TRUE)                
+bcdata$Date = dmy(bcdata$Date)
+bcdata$I = c(bcdata$Cases[2] - bcdata$Cases[1],
+                 diff(bcdata$Cases))
+bcdata <- bcdata %>% dplyr::rename(dates = Date) %>% dplyr::select(dates, I)
+
+simdata65 = read.csv("../Simulated_data/relax_sim_065.csv", header=TRUE)   
+simdata65$Date <- as.Date(simdata65$Date)
+simdata65 <- simdata65 %>% dplyr::rename(dates = Date) %>% dplyr::rename(I = Diffs) %>% dplyr::select(dates, I)
+
+simdata9 = read.csv("../Simulated_data/relax_sim_09.csv", header=TRUE)   
+simdata9$Date <- as.Date(simdata9$Date)
+simdata9 <- simdata9 %>% dplyr::rename(dates = Date) %>% dplyr::rename(I = Diffs) %>% dplyr::select(dates, I)
+
+simdata5 = read.csv("../Simulated_data/relax_sim_05.csv", header=TRUE)   
+simdata5$Date <- as.Date(simdata5$Date)
+simdata5 <- simdata5 %>% dplyr::rename(dates = Date) %>% dplyr::rename(I = Diffs) %>% dplyr::select(dates, I)
+
+
+```
+
+
+# Estimation
+
+
+```{r}
+
+res <- estimate_R(bcdata, method = "parametric_si", config = make_config(list(
+                                                    mean_si = 5, std_si = 1)))
+
+plot(res)
+
+
+res65 <- estimate_R(simdata65, method = "parametric_si", config = make_config(list(
+                                                    mean_si = 5, std_si = 1)))
+plot(res65)
+
+res9 <- estimate_R(simdata9, method = "parametric_si", config = make_config(list(
+                                                    mean_si = 5, std_si = 1)))
+plot(res9)
+
+res5 <- estimate_R(simdata5, method = "parametric_si", config = make_config(list(
+                                                    mean_si = 5, std_si = 1)))
+plot(res5)
+
+```
+
+# Time Rt>/<1 at 95% level 
+
+```{r}
+as.Date(res$R$t_end[min(which(res$R$`Quantile.0.975(R)` < 1))], origin=min(res$dates))
+
+time_after65 = min(which(res65$R$`Quantile.0.025(R)`< 1))
+time_after9 = min(which(res9$R$`Quantile.0.025(R)`< 1))
+
+as.Date(res65$R$t_end[min(which(res65$R$`Quantile.0.025(R)` > 1)[which(res65$R$`Quantile.0.025(R)` > 1) > time_after65])], origin=min(res65$dates))
+
+as.Date(res9$R$t_end[min(which(res9$R$`Quantile.0.025(R)` > 1)[which(res9$R$`Quantile.0.025(R)` > 1) > time_after9])], origin=min(res9$dates))
+```
+
+
+
+```{r}
+p1 <- ggplot(data=res$R, aes(x=t_end, y=`Mean(R)`)) +
+  geom_hline(yintercept=1, linetype="dashed", 
+                color = "grey", size=1)+ylim(c(-0.5,6.2)) +
+  geom_line()+
+  geom_ribbon(aes(ymin = `Quantile.0.025(R)`,
+                  ymax = `Quantile.0.975(R)`), fill = "#7ec5a3",alpha=0.4) +
+  labs(x='Time (days)', y="Mean Rt") +
+  geom_vline(xintercept = res$R$t_end[min(which(res$R$`Quantile.0.975(R)` < 1))],
+             color = "#7ec5a3", size=1.5, alpha = 0.7) +
+  annotate(geom = "text", x = res$R$t_end[min(which(res$R$`Quantile.0.975(R)` < 1))] - 1,
+           y = 3, label = "Rt < 1", color = "black", angle = 90) +
+  geom_vline(xintercept = 18, color = "gray25", size=1.5,
+             alpha = 0.5) +
+  annotate(geom = "text", x = 16.75, y = 1.7,
+           label = "Physical distancing", color = "black", angle = 90)
+
+p2 <- ggplot(data=res65$R, aes(x=t_end, y=`Mean(R)`)) +
+  geom_hline(yintercept=1, linetype="dashed", 
+                color = "grey", size=1)+ylim(c(0,7)) +
+  geom_ribbon(aes(ymin = `Quantile.0.025(R)`,
+                  ymax = `Quantile.0.975(R)`, fill = "#f7bb82"),alpha=0.4) +
+  geom_ribbon(data = res9$R, aes(ymin = `Quantile.0.025(R)`,
+                  ymax = `Quantile.0.975(R)`, fill = "#9caee4"),alpha=0.4) +
+ # geom_ribbon(data = res5$R, aes(ymin = `Quantile.0.025(R)`,
+ #                 ymax = `Quantile.0.975(R)`), fill = "#7ec5a3",alpha=0.4) +
+  geom_line()+
+  geom_line(data = res9$R, aes(x=t_end, y=`Mean(R)`)) +
+ # geom_line(data = res5$R, aes(x=t_end, y=`Mean(R)`)) +
+  labs(x='Time (days)', y="Mean Rt") +ylim(0, 3.5) +
+  geom_vline(xintercept = res65$R$t_end[min(which(res65$R$`Quantile.0.025(R)` > 1)[which(res65$R$`Quantile.0.025(R)` > 1) > time_after65])],
+             color = "#f7bb82", size=1.5, alpha = 0.7) +
+  geom_vline(xintercept = res9$R$t_end[min(which(res9$R$`Quantile.0.025(R)` > 1)[which(res9$R$`Quantile.0.025(R)` > 1) > time_after9])],
+             color = "#9caee4", size=1.5, alpha = 0.7) +
+  annotate(geom = "text", x = res9$R$t_end[min(which(res9$R$`Quantile.0.025(R)` > 1)[which(res9$R$`Quantile.0.025(R)` > 1) > time_after9])] - 1.25, y = 3,
+           label = "Rt > 1", color = "black", angle = 90) +
+  annotate(geom = "text", x = res65$R$t_end[min(which(res65$R$`Quantile.0.025(R)` > 1)[which(res65$R$`Quantile.0.025(R)` > 1) > time_after9])] - 1.25, y = 3,
+           label = "Rt > 1", color = "black", angle = 90) +
+  geom_vline(xintercept = 17, color = "gray25", size=1.5,
+             alpha = 0.5) +
+  annotate(geom = "text", x = 15.75, y = 2.5,
+           label = "Distancing relaxed", color = "black", angle = 90) +
+  scale_fill_manual(name = expression(~f[2]), 
+         values =c("#f7bb82"="#f7bb82","#9caee4"="#9caee4"), labels = c('0.9','0.65')) + theme(legend.position = c(0.93, 0.86),       legend.title=element_text(size=12), 
+    legend.text=element_text(size=11))
+
+
+grid.arrange(grobs = list(p1, p2), nrow = 2, heights = c(1,1))
+```
+
+
+
+
+
+## Timing
+```{r}
+test_Rt <- function(window, res){
+    R_sample <- sample_posterior_R(res, n = 100, window = window)
+    return(quantile(R_sample, probs=0.95))
+}
+
+win <- as.list(seq(1, nrow(res$R)))
+test <- lapply(win, test_Rt, res=res)
+
+# First < 1
+
+first_div <- min(which(test <= 1))
+first_div_date <- as.Date(res$R$t_end[first_div], origin=min(res$dates))
+first_div_date
+
+```
