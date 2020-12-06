@@ -61,7 +61,7 @@ if ( file.exists('FigureS2.RData') ){load('FigureS2.RData')}else{
     }
 
 
-    # social distancing first implemented on April 4th
+    # Begin on April 10th
     start_date = dmy("10-04-2020")
 
     # social distancing relaxed starting May 17th

@@ -49,58 +49,6 @@ socdistmodel <- function(t,
                 dRddt ))
        })
 }
-
-
-
-#############################################################################
-# Now for functions for the likelihood model, and the negative log likelihood:
-#
-# Log-likelihood - a function of the model parameters, the ODE model simulations, and the data.
-# We assume that the number of cases at any time x is negative binomially distributed
-# We set the dispersion to 0.1 as estimated for covid in
-# https://cmmid.github.io/topics/covid19/overdispersion-from-outbreaksize.html
-sdloglike = function(out,
-                        pars,
-                        ratio, # this is the ratio of the sampling fraction before/after any changes in testing criteria
-                        bcdata, change_days = "2020-03-14", overdisp=0.1,
-                        delayShape = 1.73,
-                        delayScale = 9.85) {
-  # For each of the days in bcdata, this returns the likelihood of the data given the simulations from the model parameters
-  ld = vapply(bcdata$day,
-              function(x) getlambd(out, # (see below for function getlambd) - the expected number of cases on day x
-                                   pars,
-                                   x,
-                                   ratio,
-                                   data=bcdata,
-                                   change_days = change_days, delayShape = delayShape,
-                                   delayScale = delayScale),
-              FUN.VALUE = 1)
-  # returns the log likelihood of seeing the data:
-  return( sum(dnbinom( bcdata$Diffs, size = overdisp, mu=ld, log=TRUE)) )
-}
-#
-#
-# In the old version, we assumed that the number of cases at any time x is independently Poisson distributed  - this
-# involves assuming that the process error is negligible.
-# We don't use this in the code anymore, but I keep it here for posterity.
-sdloglikeold = function(out,
-                     pars,
-                     ratio, # this is the ratio of the sampling fraction before/after March 16th when testing criteria changed
-                     bcdata, delayShape = 1.73,
-                     delayScale = 9.85) {
-  # For each of the days in bcdata, this returns the likelihood of the data given the simulations from the model parameters
-  ld = vapply(bcdata$day,
-              function(x) getlambd(out, # (see below for function getlambd) - the expected number of cases on day x
-                                   pars,
-                                   x,
-                                   ratio,
-                                   data=bcdata, delayShape = delayShape,
-                                   delayScale = delayScale),
-              FUN.VALUE = 1)
-  # returns the log likelihood of seeing the data:
-  return(sum((-ld) + bcdata$Diffs * (log(ld)) - log( factorial(bcdata$Diffs) )))
-}
-#
 #
 # This function returns the model prediction for all the days in the data, for a given set if model parameters
 modelpreds = function(out,
@@ -174,40 +122,6 @@ getlambd = function(out,
 }
 #
 #
-# Lastly, we define functions to return the negative log likelihood - without needing to run the ODEs first
-# Firstly, as a function of R0
-negloglike = function(R0, ratio, pars, bcdata, state, times, mysdtiming,
-                      change_days = "2020-03-14", overdisp = 0.1,
-                      delayShape = 1.73, delayScale = 9.85) {
-
-  pars$R0 = R0
-  out = as.data.frame(ode(y = state,
-                          times = times,
-                          func = socdistmodel,
-                          parms = pars,
-                          sdtiming=mysdtiming)) # This runs the ODE system, starting at 'state' and for parameters 'pars'
-
-  return(-sdloglike(out, pars,ratio,bcdata, change_days = change_days, overdisp = overdisp,
-                    delayShape = delayShape, delayScale = delayScale))
-}
-#
-# Then, as a function of f (strength of SD)
-negloglikef = function(f, ratio, ode_pars, bcdata, state, times, mysdtiming,
-                       change_days = "2020-03-14", overdisp = 0.1,
-                       delayShape = 1.73, delayScale = 9.85) {
-
-  ode_pars$f = f
-  out = as.data.frame(ode(y = state,
-                          times = times,
-                          func = socdistmodel,
-                          ode_pars,
-                          sdtiming=mysdtiming)) #mysdtiming is the function which determines when distancing is turned on/off
-
-  return(-sdloglike(out,ode_pars,ratio,bcdata, change_days = change_days, overdisp = overdisp,
-                    delayShape = delayShape, delayScale = delayScale))
-}
-
-
 
 #########################################################################################################
 # This function runs the ODE model lots of times for bootstrapped R0 (normally distributed about our MLE)
