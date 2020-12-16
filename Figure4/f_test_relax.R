@@ -66,12 +66,14 @@ if(file.exists('Figure4_relax.RData')){load('Figure4_relax.RData')}
   startTime = 17 # start of RELAXING distancing - rest of the time it's 0.36
   stopTime = 500
   
-  # We will use our most recent f MLE from the last part
+  # We will use our most recent f MLE from the last part e.g. in this version f is ALWAYS 0.36 
   out_b4 = as.data.frame(ode(y = state,times = times,func = socdistmodel,parms=opt_pars,sdtiming = mysdtiming))
   
   # simulate the time series:
   times = c(seq(-20.0, 62, 0.1))
-  # We initialise with the state of the model on May 1st
+  # We initialise with the state of the model on May 1st (this won't exactly match
+  # what the cases would have been, but it will give us a good distribution of 
+  # individuals among the compartments)
   state = unlist(out_b4[811,-1])
   
 
@@ -350,7 +352,7 @@ tib3 = res3 %>%
              U = quantile(mle,probs=0.975)) 
 tib3[1:16,2:4] = c(0.36,0.36,0.36)
 
-p1 <- ggplot(data = tib, aes(x=t,y=median))+
+p1 <- ggplot(data = tib2, aes(x=t,y=median))+
    geom_ribbon(data=tib2[1:rec_start2,], aes(x=tib2$t[1:rec_start2], ymin=tib2$L[1:rec_start2], ymax=tib2$U[1:rec_start2]), alpha=0.5, fill="gray50") +
   
   geom_ribbon(data=tib2[-(1:rec_start2-1),], aes(x=tib2$t[-(1:rec_start2-1)], ymin=tib2$L[-(1:rec_start2-1)], ymax=tib2$U[-(1:rec_start2-1)]), alpha=0.5, fill="skyblue1") +

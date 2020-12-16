@@ -102,7 +102,7 @@ results = parLapply( cl, X=1:Nreps, function(i){fit_f(state,
                                        pars,
                                        R0_vec[i],
                                        bcdata,
-                                       1.94)})}) # psi = 1.94
+                                       1.94)})}) # ratio = 1.94
 stopCluster(cl)
 
 t = dim(bcdata)[1]
