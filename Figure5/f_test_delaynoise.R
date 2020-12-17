@@ -273,66 +273,77 @@ rec_end3 = i+2
 
 save.image("noisedelay.RData")
 
+# rename to avoid ggplot error later...
+res2a <- res2
+res3a <- res3
+resa <- res
+rec_starta <- rec_start
+rec_enda <- rec_end
+rec_start3a <- rec_start3
+rec_end3a <- rec_end3
+rec_start2a <- rec_start2
+rec_end2a <- rec_end2
 
-
-tib2 = res2 %>%
+tib2a = res2a %>%
   group_by(t) %>%
   summarise( L=quantile(mle, probs=0.025),
              median=quantile(mle,probs=0.5),
              U = quantile(mle,probs=0.975))
 
-tib3 = res3 %>%
+tib3a = res3a %>%
   group_by(t) %>%
   summarise( L=quantile(mle, probs=0.025),
              median=quantile(mle,probs=0.5),
              U = quantile(mle,probs=0.975))
 
 
-tib = res %>%
+tiba = resa %>%
   group_by(t) %>%
   summarise( L=quantile(mle, probs=0.025),
              median=quantile(mle,probs=0.5),
              U = quantile(mle,probs=0.975)) 
 
 
-  p1 <- ggplot(data = tib, aes(x=t,y=median))+
-  geom_ribbon(data = tib[1:rec_start,], aes(x=t[1:rec_start], ymin=L[1:rec_start], ymax=U[1:rec_start]), alpha=0.5, fill="gray") +
-  geom_ribbon(data=tib3[1:rec_start3,], aes(x=tib3$t[1:rec_start3], ymin=tib3$L[1:rec_start3], ymax=tib3$U[1:rec_start3]), alpha=0.5, fill="gray") +
-  geom_ribbon(data=tib2[1:rec_start2,], aes(x=tib2$t[1:rec_start2], ymin=tib2$L[1:rec_start2], ymax=tib2$U[1:rec_start2]), alpha=0.5, fill="gray") +
+  p3 <- ggplot(data = tiba, aes(x=t,y=median))+
+  geom_ribbon(data = tiba[1:rec_starta,], aes(x=t[1:rec_starta], ymin=L[1:rec_starta], ymax=U[1:rec_starta]), alpha=0.5, fill="gray") +
+  geom_ribbon(data=tib3a[1:rec_start3a,], aes(x=tib3a$t[1:rec_start3a], ymin=tib3a$L[1:rec_start3a], ymax=tib3a$U[1:rec_start3a]), alpha=0.5, fill="gray") +
+  geom_ribbon(data=tib2a[1:rec_start2a,], aes(x=tib2a$t[1:rec_start2a], ymin=tib2a$L[1:rec_start2a], ymax=tib2a$U[1:rec_start2a]), alpha=0.5, fill="gray") +
     
-  geom_ribbon(data = tib[-(1:rec_start-1),], aes(x=tib$t[-(1:rec_start-1)], ymin=tib$L[-(1:rec_start-1)], ymax=tib$U[-(1:rec_start-1)]), alpha=0.5, fill="palegreen1") +
-  geom_ribbon(data = tib3[-(1:rec_start3-1),], aes(x=tib3$t[-(1:rec_start3-1)], ymin=tib3$L[-(1:rec_start3-1)], ymax=tib3$U[-(1:rec_start3-1)]), alpha=0.5, fill="gold1") +
-  geom_ribbon(data=tib2[-(1:rec_start2-1),], aes(x=tib2$t[-(1:rec_start2-1)], ymin=tib2$L[-(1:rec_start2-1)], ymax=tib2$U[-(1:rec_start2-1)]), alpha=0.5, fill="skyblue1") +
+  geom_ribbon(data = tiba[-(1:rec_starta-1),], aes(x=tiba$t[-(1:rec_starta-1)], ymin=tiba$L[-(1:rec_starta-1)], ymax=tiba$U[-(1:rec_starta-1)]), alpha=0.5, fill="palegreen1") +
+  geom_ribbon(data = tib3a[-(1:rec_start3a-1),], aes(x=tib3a$t[-(1:rec_start3a-1)], ymin=tib3a$L[-(1:rec_start3a-1)], ymax=tib3a$U[-(1:rec_start3a-1)]), alpha=0.5, fill="gold1") +
+  geom_ribbon(data=tib2a[-(1:rec_start2a-1),], aes(x=tib2a$t[-(1:rec_start2a-1)], ymin=tib2a$L[-(1:rec_start2a-1)], ymax=tib2a$U[-(1:rec_start2a-1)]), alpha=0.5, fill="skyblue1") +
     
-  geom_point(data = tib[1:rec_start,], size=1.8,shape=18, color="gray39") +
-  geom_point(data=tib3[1:rec_start3,], x=tib3$t[1:rec_start3],y=tib3$median[1:rec_start3],size=1.6,shape=19, color="gray39") +
-  geom_point(data=tib2[1:rec_start2,], x=tib2$t[1:rec_start2],y=tib2$median[1:rec_start2],size=1.6,shape=17, color="gray39") +
-  geom_point(data=tib2[-(1:rec_start2-1),], x=tib2$t[-(1:rec_start2-1)],y=tib2$median[-(1:rec_start2-1)],size=1.6,shape=17, color="royalblue3") +
-  geom_point(data=tib3[-(1:rec_start3-1),], x=tib3$t[-(1:rec_start3-1)],y=tib3$median[-(1:rec_start3-1)],size=1.6,shape=19, color="darkorange2") +
-  geom_point(data = tib[-(1:rec_start-1),], size=1.8,shape=18, color="springgreen4") +
+  geom_point(data = tiba[1:rec_starta,], size=1.8,shape=18, color="gray39") +
+  geom_point(data=tib3a[1:rec_start3a,], x=tib3a$t[1:rec_start3a],y=tib3a$median[1:rec_start3a],size=1.6,shape=19, color="gray39") +
+  geom_point(data=tib2a[1:rec_start2a,], x=tib2a$t[1:rec_start2a],y=tib2a$median[1:rec_start2a],size=1.6,shape=17, color="gray39") +
+  geom_point(data=tib2a[-(1:rec_start2a-1),], x=tib2a$t[-(1:rec_start2a-1)],y=tib2a$median[-(1:rec_start2a-1)],size=1.6,shape=17, color="royalblue3") +
+  geom_point(data=tib3a[-(1:rec_start3a-1),], x=tib3a$t[-(1:rec_start3a-1)],y=tib3a$median[-(1:rec_start3a-1)],size=1.6,shape=19, color="darkorange2") +
+  geom_point(data = tiba[-(1:rec_starta-1),], size=1.8,shape=18, color="springgreen4") +
      
   labs(x='Time (days)', y="f (MLE)") +
   theme_minimal() +
-  geom_vline(xintercept = as.numeric(res$t[18]), color = "gray25", size=1.5, alpha = 0.5) +
+  geom_vline(xintercept = as.numeric(resa$t[18]), color = "gray25", size=1.5, alpha = 0.5) +
   annotate(geom = "text",
-           x = res$t[17]-0.75,
-           y = min(res$mle)+0.6,
+           x = resa$t[17]-0.75,
+           y = min(resa$mle)+0.6,
            label = "Physical distancing",
            color = "black", angle = 90) +
   
-   annotate("rect", xmin=as.numeric(res$t[rec_start]), xmax = as.numeric(res$t[rec_end]), 
+   annotate("rect", xmin=as.numeric(resa$t[rec_starta]), xmax = as.numeric(resa$t[rec_enda]), 
             ymin=0,ymax=1 ,fill="springgreen4", alpha = 0.5) +
-   annotate("rect", xmin=as.numeric(res2$t[rec_start2]), xmax = as.numeric(res2$t[rec_end2]), 
+   annotate("rect", xmin=as.numeric(res2a$t[rec_start2a]), xmax = as.numeric(res2a$t[rec_end2a]), 
              ymin=0,ymax=1 ,fill="royalblue3", alpha = 0.5) +
-   annotate("rect", xmin=as.numeric(res3$t[rec_start3]), xmax = as.numeric(res3$t[rec_end3]), 
+   annotate("rect", xmin=as.numeric(res3a$t[rec_start3a]), xmax = as.numeric(res3a$t[rec_end3a]), 
              ymin=0,ymax=1 ,fill="darkorange2", alpha = 0.5) +
     
-  annotate(geom = "text", x = res$t[rec_start-1] - 0.75, y = 0.75,
+  annotate(geom = "text", x = resa$t[rec_starta-1] - 0.75, y = 0.75,
            label = "MLE accepted", color = "springgreen4", angle = 90)  +
-  annotate(geom = "text", x = res2$t[rec_start2-1] - 0.75, y = 0.75,
+  annotate(geom = "text", x = res2a$t[rec_start2a-1] - 0.75, y = 0.75,
            label = "MLE accepted", color = "royalblue3", angle = 90) +
-  annotate(geom = "text", x = res3$t[rec_start3-1] - 0.75, y = 0.75,
-             label = "MLE accepted", color = "darkorange2", angle = 90)
+  annotate(geom = "text", x = res3a$t[rec_start3a-1] - 0.75, y = 0.75,
+             label = "MLE accepted", color = "darkorange2", angle = 90)+ 
+    theme(plot.margin = unit(c(0.2,0,1,0), "cm"))
+  # (add margin for grid arrange)
   
   case_data <- simdata %>%
     mutate(Time = as.numeric(Date)-min(as.numeric(Date)))
@@ -340,19 +351,21 @@ tib = res %>%
   case_data <- cbind(case_data, simdata2[,3], simdata3[,3])
   names(case_data) = c("Time", "Diffs1", "Diffs2", "Diffs3")
   
-  p2 <- ggplot(data = case_data, aes(x=Time,y=Diffs1))+
+  p4 <- ggplot(data = case_data, aes(x=Time,y=Diffs1))+
     geom_point(aes(x=Time,y=Diffs2), color = "royalblue3")+geom_line(aes(x=Time,y=Diffs2), color = "royalblue3") + 
     geom_point(aes(x=Time,y=Diffs3),color = "darkorange2")+geom_line(aes(x=Time,y=Diffs3),color = "darkorange2") + 
     geom_point(color = "springgreen4")+geom_line(color = "springgreen4") + 
     labs(x='', y="Daily cases") +theme_minimal() +
     theme(axis.title.x=element_blank(),
           axis.text.x=element_blank(),
-          axis.ticks.x=element_blank())
-  #ggsave('Figure3_casecounts.pdf', width=6, height=3, units = 'in', dpi = 900)
+          axis.ticks.x=element_blank()) +
+    theme(plot.margin = unit(c(0,0,0,0), "cm"))
+  # (add margin for grid arrange)
   
-  grid.arrange(grobs = list(p2, p1), nrow = 2, heights = c(1,3))
-  # saved as 6x4inches - noise_multipanel_fig5.pdf
-
+  
+  grid.arrange(grobs = list(p4, p3), nrow = 2, heights = c(1,3))
+  # saved as 6x4inches 
+  
 
 
 if(file.exists('delay.RData')){load('delay.RData')}
@@ -634,7 +647,9 @@ p1 <- ggplot(data = tib, aes(x=t,y=median))+
   annotate(geom = "text", x = res2$t[rec_start2-1] - 0.3, y = 0.75,
            label = "MLE accepted", color = "darkorange2", angle = 90) +
   annotate(geom = "text", x = res3$t[rec_start3-1] - 0.75, y = 0.75,
-           label = "MLE accepted", color = "springgreen4", angle = 90)
+           label = "MLE accepted", color = "springgreen4", angle = 90) + 
+  theme(plot.margin = unit(c(0.2,0,1,0), "cm"))
+# (add margin for grid arrange)
 
 
 case_data <- simdata %>%
@@ -650,11 +665,18 @@ p2 <- ggplot(data = case_data, aes(x=Time,y=Diffs1))+
   labs(x='', y="Daily cases") +theme_minimal() +
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
-        axis.ticks.x=element_blank())
-#ggsave('Figure3_casecounts.pdf', width=6, height=3, units = 'in', dpi = 900)
+        axis.ticks.x=element_blank()) +
+  theme(plot.margin = unit(c(0,0,0,0), "cm"))
+# (add margin for grid arrange)
+
 
 grid.arrange(grobs = list(p2, p1), nrow = 2, heights = c(1,3))
-# saved as 6x4inches - delay_multipanel_fig5.pdf
+# saved as 6x4inches 
 
 
+
+
+
+# Combine to one figure, margin space already added
+grid.arrange(grobs = list(p4, p3, p2, p1), nrow = 4, heights = c(1,3, 1, 3))
 

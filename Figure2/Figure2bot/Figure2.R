@@ -118,7 +118,7 @@ rbind(cbind( getCasesbyDay2(tt_no_noise[[1]],plottimes,startDate=start_date), f2
   geom_vline(xintercept=dmy("17-05-2020"), colour="#cdcdcd", size=1)+
   xlim(dmy("01-05-2020"), dmy("01-07-2020"))+
   ylim(0,600) +
-  labs(x="Date", y="Active cases")+
+  labs(x="Date", y="Active cases", fill=expression(f[2]), colour=expression(f[2]))+
   theme_minimal()
 
  p = last_plot()

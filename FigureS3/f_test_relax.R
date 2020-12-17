@@ -1,3 +1,4 @@
+
 #----------------------------------------------------------
 # preliminaries
 
@@ -10,7 +11,7 @@ library(parallel)
 library(gridExtra)
 set.seed(684645)
 
-if(file.exists('Figure4_relax.RData')){load('Figure4_relax.RData')}
+if(file.exists('FigureS3_relax.RData')){load('FigureS3_relax.RData')}
 #----------------------------------------------------------
 # Read in the files
   bcdata = read.csv("../bc_casecounts2204.csv", header=TRUE)
@@ -373,7 +374,9 @@ p1 <- ggplot(data = tib2, aes(x=t,y=median))+
            ymin=0,ymax=1 ,fill="royalblue3", alpha = 0.5) +
   
   annotate(geom = "text", x = res2$t[rec_start2-1] - 0.75, y = 0.25,
-           label = "MLE accepted", color = "royalblue3", angle = 90) 
+           label = "MLE accepted", color = "royalblue3", angle = 90) +
+  theme(plot.margin = unit(c(0.2,0,1,0), "cm"))
+# (add margin for grid arrange)
 
 case_data <- simdata1 %>%
   mutate(Time = as.numeric(Date)-min(as.numeric(Date)))
@@ -388,11 +391,112 @@ p2 <- ggplot(data = case_data, aes(x=Time,y=Diffs1))+
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank()) +
-  scale_y_continuous(breaks=c(0,5,10))
+  scale_y_continuous(breaks=c(0,5,10)) +
+  theme(plot.margin = unit(c(0,0,0,0), "cm"))
+# (add margin for grid arrange)
 #ggsave('Figure4_casecounts.pdf', width=6, height=3, units = 'in', dpi = 900)
 
 grid.arrange(grobs = list(p2, p1), nrow = 2, heights = c(1,3))
 # saved as 6x4 inches
 
+
+# Plot all 3:
+
+p3 <- ggplot(data = tib, aes(x=t,y=median))+
+  geom_ribbon(data=tib[1:rec_start,], aes(x=tib$t[1:rec_start], ymin=tib$L[1:rec_start], ymax=tib$U[1:rec_start]), alpha=0.5, fill="gray50") +
+  
+  geom_ribbon(data=tib[-(1:rec_start-1),], aes(x=tib$t[-(1:rec_start-1)], ymin=tib$L[-(1:rec_start-1)], ymax=tib$U[-(1:rec_start-1)]), alpha=0.5, fill="skyblue1") +
+  
+  geom_point(data=tib[1:rec_start,], x=tib$t[1:rec_start],y=tib$median[1:rec_start],size=1.6,shape=17, color="gray39") +
+  geom_point(data=tib[-(1:rec_start-1),], x=tib$t[-(1:rec_start-1)],y=tib$median[-(1:rec_start-1)],size=1.6,shape=17, color="royalblue3") +
+  
+  labs(x='Time (days)', y="f (MLE)") +
+  theme_minimal() +
+  geom_vline(xintercept = as.numeric(res$t[17]), color = "gray25", size=1.5, alpha = 0.5) +
+  annotate(geom = "text",
+           x = res$t[16]-0.75,
+           y = min(res$mle)+0.7,
+           label = "Distancing relaxed",
+           color = "black", angle = 90) +
+  
+  annotate("rect", xmin=as.numeric(res$t[rec_start]), xmax = as.numeric(res$t[rec_end]), 
+           ymin=0,ymax=1 ,fill="royalblue3", alpha = 0.5) +
+  
+  annotate(geom = "text", x = res$t[rec_start-1] - 0.75, y = 0.25,
+           label = "MLE accepted", color = "royalblue3", angle = 90)  +
+  theme(plot.margin = unit(c(0.2,0,1,0), "cm"))
+# (add margin for grid arrange)
+
+case_data <- simdata1 %>%
+  mutate(Time = as.numeric(Date)-min(as.numeric(Date)))
+case_data <- case_data[,c(5,3)]
+case_data <- cbind(case_data, simdata2[,3], simdata3[,3])
+names(case_data) = c("Time", "Diffs1", "Diffs2", "Diffs3")
+
+p4 <- ggplot(data = case_data, aes(x=Time,y=Diffs1))+
+  geom_point(aes(x=Time,y=Diffs1), color = "black")+geom_line(aes(x=Time,y=Diffs1), color = "black") +
+  
+  labs(x='', y="Daily cases") +theme_minimal() +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+  scale_y_continuous(breaks=c(0,50,100)) +
+  theme(plot.margin = unit(c(0,0,0,0), "cm"))
+# (add margin for grid arrange)
+#ggsave('Figure4_casecounts.pdf', width=6, height=3, units = 'in', dpi = 900)
+
+grid.arrange(grobs = list(p4, p3), nrow = 2, heights = c(1,3))
+
+
+
+p5 <- ggplot(data = tib3, aes(x=t,y=median))+
+  geom_ribbon(data=tib3[1:rec_start3,], aes(x=tib3$t[1:rec_start3], ymin=tib3$L[1:rec_start3], ymax=tib3$U[1:rec_start3]), alpha=0.5, fill="gray50") +
+  
+  geom_ribbon(data=tib3[-(1:rec_start3-1),], aes(x=tib3$t[-(1:rec_start3-1)], ymin=tib3$L[-(1:rec_start3-1)], ymax=tib3$U[-(1:rec_start3-1)]), alpha=0.5, fill="skyblue1") +
+  
+  geom_point(data=tib3[1:rec_start3,], x=tib3$t[1:rec_start3],y=tib3$median[1:rec_start3],size=1.6,shape=17, color="gray39") +
+  geom_point(data=tib3[-(1:rec_start3-1),], x=tib3$t[-(1:rec_start3-1)],y=tib3$median[-(1:rec_start3-1)],size=1.6,shape=17, color="royalblue3") +
+  
+  labs(x='Time (days)', y="f (MLE)") +
+  theme_minimal() +
+  geom_vline(xintercept = as.numeric(res$t[17]), color = "gray25", size=1.5, alpha = 0.5) +
+  annotate(geom = "text",
+           x = res$t[16]-0.75,
+           y = min(res$mle)+0.7,
+           label = "Distancing relaxed",
+           color = "black", angle = 90) +
+  
+  annotate("rect", xmin=as.numeric(res3$t[rec_start3]), xmax = as.numeric(res3$t[rec_end3]), 
+           ymin=0,ymax=1 ,fill="royalblue3", alpha = 0.5) +
+  
+  annotate(geom = "text", x = res3$t[rec_start3-1] - 0.75, y = 0.25,
+           label = "MLE accepted", color = "royalblue3", angle = 90)  +
+  theme(plot.margin = unit(c(0.2,0,1,0), "cm"))
+# (add margin for grid arrange)
+
+case_data <- simdata1 %>%
+  mutate(Time = as.numeric(Date)-min(as.numeric(Date)))
+case_data <- case_data[,c(5,3)]
+case_data <- cbind(case_data, simdata2[,3], simdata3[,3])
+names(case_data) = c("Time", "Diffs1", "Diffs2", "Diffs3")
+
+p6 <- ggplot(data = case_data, aes(x=Time,y=Diffs3))+
+  geom_point(aes(x=Time,y=Diffs3), color = "black")+geom_line(aes(x=Time,y=Diffs3), color = "black") +
+  
+  labs(x='', y="Daily cases") +theme_minimal() +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+  scale_y_continuous(breaks=c(0,5,10)) +
+  theme(plot.margin = unit(c(0,0,0,0), "cm"))
+# (add margin for grid arrange)
+#ggsave('Figure4_casecounts.pdf', width=6, height=3, units = 'in', dpi = 900)
+
+grid.arrange(grobs = list(p6, p5), nrow = 2, heights = c(1,3))
+
+
+
+# Combine to one figure, margin space already added
+grid.arrange(grobs = list(p4, p3,p2, p1, p6, p5), nrow = 6, heights = c(1,3, 1, 3, 1, 3))
 
  
