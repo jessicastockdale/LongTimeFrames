@@ -1,7 +1,6 @@
-###############################################################################
-### Required functions for"When do we see the impact of social distancing?" ###
-###############################################################################
-
+####################################################
+### Required functions for"Long time frames...?" ###
+####################################################
 
 
 #############################################################
@@ -13,16 +12,6 @@
 #          - Distancing individuals have contacts reduced by some fraction f
 #          - Some individuals are quarantined and stop being able to infect - at rate q
 #          - Average length of symptomatic infectious period D
-
-
-### Version: ###
-## changed change_date to "2020-05-17"
-## changed start_date to "2020-04-10" --- for SIR simulation, changed back to 2020-03-14
-## changed probs for quantiles to c(0.05,0.5,0.95) instead of c(0.25,0.5,0.75)
-## changed sd from 0.05 to 0.15 in 'multisolve'
-## added 'SIRmodel2', 'multisolve_SIR', 'makeplot2' for SIR model simulations
-## added startDate parameter in
-
 socdistmodel <- function(t,
                          state,
                          pars,
@@ -37,14 +26,14 @@ socdistmodel <- function(t,
          dIdt =  k2*E2 - q*I - I/D - r*I + ur*Id
          dQdt = q*I - Q/D - r*Q + ur*Qd
          dRdt = I/D + Q/D - r*R + ur*Rd
-
+         
          dSddt = -( f*R0/(D+1/k2)) * (I+E2 + f*(Id+E2d)) * Sd/N + r*S - ur*Sd
          dE1ddt = ( f*R0/(D+1/k2)) * (I+E2 + f*(Id+E2d)) * Sd/N - k1*E1d +r*E1 - ur*E1d
          dE2ddt = k1*E1d - k2*E2d + r*E2 - ur*E2d
          dIddt = k2*E2d - q*Id - Id/D + r*I - ur*Id
          dQddt = q*Id - Qd/D + r*Q - ur*Qd
          dRddt = Id/D + Qd/D + r*R - ur*Rd
-         # dRdt = I/D; dr + ds + di =0, S+I+R = N --> R = N-S-I and we eliminate R
+         # dRdt = I/D; dr + ds + di =0, S+I+R = N --> R = N-S-I and we eliminate R 
          list(c(dSdt,
                 dE1dt,
                 dE2dt,
@@ -59,7 +48,8 @@ socdistmodel <- function(t,
                 dRddt ))
        })
 }
-#
+
+
 # This function returns the model prediction for all the days in the data, for a given set if model parameters
 modelpreds = function(out,
                       pars,
@@ -77,7 +67,7 @@ modelpreds = function(out,
 }
 #
 #
-# This is the function works out the model's predicted predicted number of reported cased per day (e.g. it takes into
+# This is the function works out the model's predicted predicted number of reported cased per day (e.g. it takes into 
 # account the delay between symptom onset and being reported as a case)
 getlambd = function(out,
                     pars,
@@ -87,30 +77,30 @@ getlambd = function(out,
                     sampFrac = 0.35,
                     delayShape = 1.73,
                     delayScale = 9.85,
-                    change_days = "2020-05-17") {
-  # delayShape and delayScale (of a Weibull distribution) were fit for BC in Anderson et al
+                    change_days = "2020-05-17") { 
+  # delayShape and delayScale (of a Weibull distribution) were fit for BC in Anderson et al  
   # - this is time delay between symptom onset and reporting
-
+  
   # change_day are the days on which the testing regime changes
-
+  
   meanDelay = delayScale * gamma(1 + 1 / delayShape)   # comes out to mean = 8.78 with parameters 1.73, 9.85
-
+  
   # some error messages:
   try(if(var(diff(out$time)) > 0.005) { stop("approx integral assumes equal time steps")})
   try(if(max(out$time) < day) {stop("model simulation is not long enough for the data")})
   try(if(min(out$time) > day - (2*meanDelay+1)) {stop("we need an earlier start time for the model")})
-
+  
   # relevant times to identify new cases
-  ii = which(out$time > day - 2 * meanDelay & out$time <= day)
+  ii = which(out$time > day - 2 * meanDelay & out$time <= day) 
   dx = out$time[ii[2]] - out$time[ii[1]] # assumes equal time intervals
-
+  
   # all new cases arising at each of those times
   incoming = with(pars,
-                  { k2 * (out$E2[ii] + out$E2d[ii])})
-
+                  { k2 * (out$E2[ii] + out$E2d[ii])}) 
+  
   # take care of changing testing regime over time - this updated version takes a list of days
   # when the testing regime changed ('change_days') and an accompanying list of how the fraction of
-  # cases sampled changed on that day ('ratio'), relative to the first days in the data.
+  # cases sampled changed on that day ('ratio'), relative to the first days in the data. 
   change_day_indicator = sort(c(min(data$day),data$day[match(as.Date(change_days), data$Date)]))
   which.sampling = findInterval(day, change_day_indicator)
   ratio = c(1, ratio)
@@ -118,20 +108,18 @@ getlambd = function(out,
   #thisSamp = ifelse( day < change_day_indicator,
   #                   sampFrac,
   #                   sampFrac*ratio) # - old version
-
+  
   # each of the past times' contribution to this day's case count
   ft = thisSamp * incoming * dweibull(x = max(out$time[ii]) - out$time[ii],
                                       shape = delayShape,
                                       scale = delayScale)
-  # the model's predicted number of reported cases on some day r is comprised of contributions from previous days
+  # the model's predicted number of reported cases on some day r is comprised of contributions from previous days 
   # weighted by the delay
-
+  
   # return numerical integral of ft (trapezium rule)
   return(thisSamp * 0.5 * (dx) * (ft[1] + 2*sum(ft[2:(length(ft)-1)]) + ft[length(ft)]))
 }
 #
-
-
 #########################################################################################################
 # This function runs the ODE model lots of times for bootstrapped R0 (normally distributed about our MLE)
 #
@@ -150,41 +138,41 @@ multisolve = function(params,
                      # params
                      # D,  k1,  k2, q, r,  ur
                      D = params$D
-                     D = D * runif(1,
+                     D = runif(1,
                        min = D * (1-uncertainty),
                        max = D * (1 + uncertainty))
                      params$D = D
-
+                     
                      k1 = params$k1
-                     k1 = k1 * runif(1,
+                     k1 = runif(1,
                        min = k1 * (1-uncertainty),
                        max = k1 * (1+uncertainty))
                      params$k1 = k1
-
+                     
                      k2 = params$k2
-                     k2 = k2 * runif(1,
+                     k2 = runif(1,
                        min = k2 * (1-uncertainty),
                        max = k2 * (1+uncertainty))
                      params$k2 = k2
-
+                     
                      q = params$q
-                     q = q * runif(1,
+                     q = runif(1,
                        min = q * (1-uncertainty),
                        max = q * (1+uncertainty))
                      params$q = q
-
+                     
                      r = params$r
-                     r = r * runif(1,
+                     r = runif(1,
                        min = r * (1-uncertainty),
                        max = r * (1+uncertainty))
                      params$r = r
-
+                     
                      ur = params$ur
-                     ur = ur * runif(1,
+                     ur = runif(1,
                        min = ur * (1-uncertainty),
                        max = ur * (1+uncertainty))
                      params$ur = ur
-
+                     
                      thispars=params
                      thispars$R0=x
                      return( as.data.frame(deSolve::ode(y = state,
@@ -203,7 +191,7 @@ sirmodel2 <- function(t, state, pars, sdtiming){ ## modified to model SIR rather
                  pars)),
        {
          f = sdtiming(t, pars)
-
+         
          E1=E2=E1d=E2d=q=Q=Qd=0; # not used in SIR case
          dE1dt=dE2dt=dQdt=dE1ddt=dE2ddt=dQddt=0 # not used in SIR case
          dSdt = -(R0 / (D+1/k2)) * (I + E2 + f * (Id+E2d)) * S/N - r*S + ur*Sd
@@ -212,7 +200,7 @@ sirmodel2 <- function(t, state, pars, sdtiming){ ## modified to model SIR rather
          # dE1dt = (R0 / (D+1/k2)) * (I + E2 + f * (Id+E2d)) * S/N - k1*E1 -r*E1 + ur*E1d
          # dE2dt = k1*E1 - k2*E2 - r*E2 + ur*E2d
          # dQdt = q*I - Q/D - r*Q + ur*Qd
-
+         
          dSddt = -( f*R0/(D+1/k2)) * (I+E2 + f*(Id+E2d)) * Sd/N + r*S - ur*Sd
          dIddt = ( f*R0/(D+1/k2)) * (I+E2 + f*(Id+E2d)) * Sd/N + k2*E2d - q*Id - Id/D + r*I - ur*Id
          dRddt = Id/D + Qd/D + r*R - ur*Rd
@@ -238,7 +226,7 @@ sirmodel2 <- function(t, state, pars, sdtiming){ ## modified to model SIR rather
 
 
 multisolve_SIR = function(params,
-                          state,
+                          state, 
                           times,
                           nReps,
                           timefunc) {
@@ -259,10 +247,10 @@ multisolve_SIR = function(params,
                                                func = sirmodel2,
                                                parms = thispars,
                                                sdtiming = timefunc)))})
-
+  
   fsi = with(params, r/(r+ur))
   nsi = 1 - fsi
-
+  
   names(biglist) = rs
   return(dplyr::bind_rows(biglist,
                           .id="R0"))
@@ -317,6 +305,8 @@ getAllCasesbyDay2 = function(df,
 
 ##########################################################################
 # Plotting function: take in 4 solutions in list form, and make the ggplots
+#
+# (I should code up a better version where it doesn't have to be 4 cases)
 makePlots = function(tt2,
                      type="symp",
                      onlyafter = 5,
@@ -364,7 +354,7 @@ makePlots = function(tt2,
     cbd3[, 3:5] = cbd3[, 3:5] / popSize
     cbd4[, 3:5] = cbd4[, 3:5] / popSize
   }
-
+  
   p1 = ggplot(data=cbd1) +
     geom_line(aes(x = dates,
                   y = median)) +
@@ -449,7 +439,7 @@ makePlots2 = function(tt2,
                      onlyafter = 5,
                      PopScale = TRUE,
                      popSize = N, times) {
-
+  
   PopScale = TRUE
   if(type == "symp") {
     cbd1 = getCasesbyDay2(tt2[[1]],
@@ -486,7 +476,7 @@ makePlots2 = function(tt2,
     cbd4[, 3:5] = cbd4[, 3:5] / popSize
   }
   plotdates = firstdiverge2(tt2)$result[,1]
-
+  
   fancy_scientific <- function(l) {
     # turn in to character string in scientific notation
     l <- format(l, scientific = TRUE)
@@ -500,11 +490,11 @@ makePlots2 = function(tt2,
   t_ = tt2[[1]]$time
   i_ = (tt2[[1]]$Id + tt2[[1]]$Id) / popSize
   m_ = rep(1:50,each=701)
-
+  
   ### First pane ###
   p1 = ggplot(data=cbd1) +
     geom_line(data = data.frame(x = t_, y = i_, group = m_), aes(x=x,y=y,group =group), col="grey", alpha=0.3) +
-
+    
     #geom_line(aes(x = times,
     #              y = median), linetype="dotted") +
     #geom_ribbon(aes(x = times,
@@ -513,10 +503,10 @@ makePlots2 = function(tt2,
     #            alpha = 0.5,
     #            fill="grey") +
     geom_line(data = data.frame(x = t_, y = (tt2[[2]]$Id + tt2[[2]]$Id) / popSize, group = m_), aes(x=x,y=y,group =group), col="blue", alpha=0.3) +
-
+    
     scale_x_continuous(limits = c(0, 40)
     ) +
-
+    
     #geom_ribbon(data = cbd2,
     #            aes(x = times,
     #                ymin = lower25,
@@ -525,14 +515,14 @@ makePlots2 = function(tt2,
     #            fill="blue") +
     geom_vline(xintercept = c(plotdates[1]), linetype=c("dotted"), colour=c("black"), size=1)+
     xlab("Time (days)") + ylab("Proportion infected") + theme_minimal() # add vertical line to the outcome date(1)
-
-
-
-
+  
+  
+  
+  
   ### Second pane ###
   p1_1 = ggplot(data=cbd1) +
     geom_line(data = data.frame(x = t_, y = i_, group = m_), aes(x=x,y=y,group =group), col="grey", alpha=0.3) +
-
+    
     scale_x_continuous(limits = c(0, 40)
     ) +
     #geom_ribbon(aes(x = times,
@@ -550,11 +540,11 @@ makePlots2 = function(tt2,
   #            alpha = 0.3,
   #            fill="red") +
   geom_line(data = data.frame(x = t_, y = (tt2[[4]]$Id + tt2[[4]]$Id) / popSize, group = m_), aes(x=x,y=y,group =group), col="red", alpha=0.3) +
-
+    
     geom_vline(xintercept = c(plotdates[3]), linetype=c("dotted"), colour=c("black"), size=1)+
     xlab("Time (days)") + ylab("Proportion infected") + theme_minimal() # add vertical line to the outcome date(1)
-
-
+  
+  
   p2 = ggplot(data=dplyr::filter(cbd1,
                                  times >= onlyafter)) +
     geom_line(aes(x = times,
@@ -596,7 +586,7 @@ makePlots2 = function(tt2,
                     ymax = upper75),
                 alpha = 0.3,
                 fill="orange")
-
+  
   return(list(p1,p1_1,
               p2))
 }
@@ -641,7 +631,7 @@ makePlots3 = function(tt2,
     cbd4[, 3:5] = cbd4[, 3:5] / popSize
   }
   plotdates = firstdiverge2(tt2)$result[,1]
-
+  
   ### First pane ###
   p1 = ggplot(data=cbd1) +
     geom_line(aes(x = times,
@@ -661,10 +651,10 @@ makePlots3 = function(tt2,
                 alpha = 0.3,
                 fill="blue") +
     geom_vline(xintercept = plotdates[1], linetype="dotted", colour="black", size=1)+ # add vertical line to the outcome date(1)
-    xlab("Time (days)") + ylab("Proportion infected")+
+    xlab("Time (days)") + ylab("Proportion infected")+ 
     theme_light()+
     scale_x_continuous(limits=c(0,40))
-
+  
   ### Second pane ###
   p1_1 = ggplot(data=cbd1) +
     geom_line(aes(x = times,
@@ -687,8 +677,8 @@ makePlots3 = function(tt2,
     xlab("Time (days)") + ylab("Proportion infected")+
     theme_light()+
     scale_x_continuous(limits=c(0,40))
-
-
+  
+  
   p2 = ggplot(data=dplyr::filter(cbd1,
                                  times >= onlyafter)) +
     geom_line(aes(x = times,
@@ -730,7 +720,7 @@ makePlots3 = function(tt2,
                     ymax = upper75),
                 alpha = 0.3,
                 fill="orange")
-
+  
   return(list(p1,p1_1,
               p2))
 }
@@ -739,7 +729,7 @@ makePlots3 = function(tt2,
 # firstdiverge2 by Lloyd T. Elliott
 # Precondition: tt a list in the same format as the
 #  return value of multisolve. cc is the sensitivity
-#  of the test - two time series will be considered
+#  of the test - two time series will be considered 
 #  different if one exceeds the other by cc cases.
 #  The default value of cc is 10.
 #
@@ -751,15 +741,15 @@ makePlots3 = function(tt2,
 #    range t1 <= t <= t2 are considered as possible
 #    change points.
 #
-# Postcondition:
+# Postcondition: 
 #   Returns a list with named elements 'results' and
 #     'posteriors'.
 #
 #   The value of 'results' is a dataframe with a
 #     column 'time' indicating the first time point for
-#     which the difference between I+Id values from
+#     which the difference between I+Id values from 
 #     tt[[1]] exceeds tt[[m]] by cc cases, with posterior
-#     probability > 0.95.
+#     probability > 0.95. 
 #     The column 'posterior' indicates the posterior
 #     probability that tt[[1]] exceeds tt[[m]] by cc cases.
 #     at the time indicated in 'results' (i.e., 'posterior'
@@ -773,7 +763,7 @@ makePlots3 = function(tt2,
 #       'tt[[1]] -vs- tt[[4]]'
 #
 #   If no time point has posterior distribution > 0.95 for
-#     a given pair of models, an NA is recorded in
+#     a given pair of models, an NA is recorded in 
 #     'posterior' and also in 'time' columns.
 #
 #   The value of 'posteriors' indicates the posterior
@@ -783,50 +773,50 @@ makePlots3 = function(tt2,
 #     results$time.
 
 #   In all cases, the units of the time points to real
-#     times and dates are the same mappings that
+#     times and dates are the same mappings that 
 #     would be returned from getCasesbyDay2
 
 firstdiverge2 = function(tt, t1, t2, cc = 10, increasing=F) {
-
+  
   if (cc < 0) {
     warning('firstdiverge: cc must be positive')
     return(NULL)
   }
-
+  
   # Argument validation
-
+  
   if (missing(t2)) {
     t2 = max(tt[[1]]$time)
   }
-
+  
   if (missing(t1)) {
     t1 = min(tt[[1]]$time)
   }
-
+  
   if (t2 <= t1) {
     warning('firstdiverge: t2 must be after t1')
     return(NULL)
   }
-
+  
   m = length(tt)
   if (m <= 1) {
     warning('firstdiverge: tt should have more than 1 element.')
     return(NULL)
   }
-
+  
   support = sort(unique(tt[[1]]$time))
   support = support[support >= t1 & support <= t2]
   n = length(support)
-
+  
   if (n <= 1) {
     warning('firstdiverge: support of timeseries too small')
   }
-
+  
   results = data.frame(
     time = rep(NA, m - 1),
     posterior = rep(NA, m - 1)
   )
-
+  
   for (m1 in 2:m) {
     for (m2 in 1:(m1-1)) {
       if (!all(sort(unique(tt[[m1]]$time)) == sort(unique(tt[[m2]]$time)))) {
@@ -835,30 +825,30 @@ firstdiverge2 = function(tt, t1, t2, cc = 10, increasing=F) {
       }
     }
   }
-
-
+  
+  
   posteriors = matrix(NA, n, m - 1)
   colnames(posteriors) = 1:(m-1)
   rownames(posteriors) = support
-
+  
   for (ii in 2:m) {
     colnames(posteriors)[ii - 1] = sprintf('tt[[1]] -vs- tt[[%d]]', ii)
     rownames(results)[ii - 1] = sprintf('tt[[1]] -vs- tt[[%d]]', ii)
   }
-
+  
   for (ii in 2:m) {
     ps = c()
     first = -1
     for (t in support) {
       indices = tt[[1]]$time == t
       xx = tt[[1]][indices, 'I'] + tt[[1]][indices, 'Id']
-
+      
       indices = tt[[ii]]$time == t
       yy = tt[[ii]][indices, 'I'] + tt[[ii]][indices, 'Id']
-
+      
       numer = 0.0
       denom = 0.0
-
+      
       for (x in xx) {
         for (y in yy) {
           if ( (increasing && y-x>cc)||(!increasing && x-y>cc) ) {
@@ -867,15 +857,15 @@ firstdiverge2 = function(tt, t1, t2, cc = 10, increasing=F) {
           denom = denom + 1
         }
       }
-
+      
       # For small t, range may be fixed
-
+      
       if (length(unique(xx)) == 1 || length(unique(yy)) == 1) {
         pv = 0
       } else {
         pv = numer / denom
       }
-
+      
       if (first == -1 && pv > 0.95) {
         first = t
         results$time[ii - 1] = first
@@ -885,7 +875,7 @@ firstdiverge2 = function(tt, t1, t2, cc = 10, increasing=F) {
     }
     posteriors[, ii - 1] = ps
   }
-
+  
   return(list(
     results = results,
     posteriors = posteriors
